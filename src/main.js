@@ -2,21 +2,43 @@ import { Sidebar } from './components/Sidebar.js';
 import { ChatInterface } from './components/ChatInterface.js';
 import { Library } from './components/Library.js';
 import { Notes } from './components/Notes.js';
+import { Header } from './components/Header.js';
 
 class App {
     constructor() {
+        this.appContainer = document.getElementById('app');
         this.mainContent = document.getElementById('main-content');
-        this.sidebar = document.querySelector('app-sidebar');
         this.currentView = 'library'; // Default view
 
         this.init();
     }
 
     init() {
-        // Initialize Sidebar
+        // Clear existing structure to rebuild securely if needed, but for now we append/prepend
+
+        // 1. Inject Header
+        if (!document.querySelector('app-header')) {
+            const header = new Header();
+            this.appContainer.prepend(header);
+        }
+
+        // 2. Create App Body Wrapper if not exists
+        let appBody = document.getElementById('app-body');
+        if (!appBody) {
+            appBody = document.createElement('div');
+            appBody.id = 'app-body';
+            // Move main content into body
+            this.mainContent.parentNode.insertBefore(appBody, this.mainContent);
+            appBody.appendChild(this.mainContent);
+        }
+
+        // 3. Inject Sidebar into App Body
         if (!document.querySelector('app-sidebar')) {
             const sidebar = new Sidebar();
-            document.getElementById('app').prepend(sidebar);
+            appBody.prepend(sidebar);
+            this.sidebar = sidebar;
+        } else {
+            this.sidebar = document.querySelector('app-sidebar');
         }
 
         // Initial Render
@@ -29,8 +51,14 @@ class App {
             this.handleBookChange(e.detail.book);
             this.navigate('chat');
             // Update sidebar selection visually if needed
-            const sidebar = document.querySelector('app-sidebar');
-            if (sidebar) sidebar.selectBook(e.detail.book.id);
+            if (this.sidebar) this.sidebar.selectBook(e.detail.book.id);
+        });
+
+        // Sidebar Toggle Listener
+        document.addEventListener('toggle-sidebar', () => {
+            if (this.sidebar) {
+                this.sidebar.classList.toggle('collapsed');
+            }
         });
     }
 
@@ -61,6 +89,9 @@ class App {
         const chatInterface = this.mainContent.querySelector('chat-interface');
         if (chatInterface) {
             chatInterface.setBook(book);
+        } else if (this.currentView === 'notes') {
+            // Do nothing, Notes view handles book changes internally via NotesSidebar
+            return;
         } else {
             this.navigate('chat');
             setTimeout(() => {

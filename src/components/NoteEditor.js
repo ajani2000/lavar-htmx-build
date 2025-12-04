@@ -7,6 +7,28 @@ export class NoteEditor extends HTMLElement {
         this.render();
     }
 
+    setNoteData(note) {
+        if (!note) {
+            // Reset to blank state
+            this.querySelector('input').value = '';
+            this.querySelector('#tags-container').innerHTML = `
+                <button id="add-tag-btn" style="font-size: 0.75rem; color: var(--color-primary); opacity: 0.8;">+ Add Tag</button>
+            `;
+            this.querySelector('.cue-list').innerHTML = '';
+            this.querySelector('.notes-list').innerHTML = `
+                <div class="note-block" contenteditable="true" style="margin-bottom: 1.5rem; outline: none; padding: 4px; border-radius: 4px; min-height: 1.5em;">
+                    Start typing your note...
+                </div>
+            `;
+            this.querySelector('#summary-text').value = '';
+        } else {
+            // Load note data (mock implementation for now)
+            // In a real app, we'd populate fields from the note object
+            this.querySelector('input').value = note.title || 'Untitled Note';
+            // ... populate other fields
+        }
+    }
+
     render() {
         this.innerHTML = `
             <div style="height: 100%; display: flex; flex-direction: column;">
@@ -74,8 +96,14 @@ export class NoteEditor extends HTMLElement {
 
                 <!-- Summary (Bottom) -->
                 <div class="summary-section">
-                     <h3 class="section-title">Summary</h3>
-                     <textarea id="summary-text" style="width: 100%; height: 100%; background: transparent; border: none; resize: none; color: var(--color-text-primary); outline: none; font-family: inherit; line-height: 1.6;" placeholder="Write a brief summary of these notes..."></textarea>
+                     <div class="flex justify-between items-center mb-2">
+                        <h3 class="section-title" style="margin-bottom: 0;">Summary</h3>
+                        <div class="flex gap-2">
+                            <button id="edit-summary-btn" class="btn btn-ghost" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Edit</button>
+                            <button id="save-summary-btn" class="btn btn-primary" style="font-size: 0.75rem; padding: 0.25rem 0.5rem; display: none;">Save</button>
+                        </div>
+                     </div>
+                     <textarea id="summary-text" disabled style="width: 100%; height: 100%; background: transparent; border: none; resize: none; color: var(--color-text-primary); outline: none; font-family: inherit; line-height: 1.6; opacity: 0.7;" placeholder="Write a brief summary of these notes..."></textarea>
                 </div>
             </div>
         `;
@@ -115,6 +143,27 @@ export class NoteEditor extends HTMLElement {
 
         // Export
         this.querySelector('#export-btn').addEventListener('click', () => this.exportToMarkdown());
+
+        // Summary Edit/Save
+        const summaryText = this.querySelector('#summary-text');
+        const editBtn = this.querySelector('#edit-summary-btn');
+        const saveBtn = this.querySelector('#save-summary-btn');
+
+        editBtn.addEventListener('click', () => {
+            summaryText.disabled = false;
+            summaryText.style.opacity = '1';
+            summaryText.focus();
+            editBtn.style.display = 'none';
+            saveBtn.style.display = 'inline-flex';
+        });
+
+        saveBtn.addEventListener('click', () => {
+            summaryText.disabled = true;
+            summaryText.style.opacity = '0.7';
+            saveBtn.style.display = 'none';
+            editBtn.style.display = 'inline-flex';
+            // Here you would typically save the content to backend/storage
+        });
 
         // Focus effects for editable blocks
         this.addEventListener('focusin', (e) => {
